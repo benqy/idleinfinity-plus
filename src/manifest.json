@@ -1,0 +1,34 @@
+{
+  "name": "idle infinity plus",
+  "version": "1.0",
+  "description": "自愿使用,不承担任何责任,操作失误装备丢失概不负责",
+  "permissions": ["activeTab", "declarativeContent", "storage"],
+  "options_page": "options.html",
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+	  "matches":["http://*/*","https://*/*"],
+    "js": ["jquery.js","content.js"],
+	  "run_at":"document_end"
+    }
+  ],
+  "page_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/logo.png",
+      "32": "images/logo.png",
+      "48": "images/logo.png",
+      "128": "images/logo.png"
+    }
+  },
+  "icons": {
+    "16": "images/logo.png",
+    "32": "images/logo.png",
+    "48": "images/logo.png",
+    "128": "images/logo.png"
+  },
+  "manifest_version": 2
+}
