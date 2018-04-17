@@ -1,7 +1,7 @@
 //异步,批量出售
-let form = $('form');
+let form = $('form')
 let eid = $("#eid")
-
+$('canvas').hide()
 
 let sellEquipById = (id, cb) => {
     eid.val(id)
@@ -122,3 +122,6 @@ bagpack.find('.panel-footer .pull-right').prepend(storechecked) */
 
 /*  */
 //$('.panel-inverse:eq(1) .equip-container > p input[type=checkbox]:checked')
+
+
+//<div class="notice-content"><span class="label label-success">竞标</span><span class="">[2018/4/14 23:24:06]</span>收到对装备<span class="unique equip-name">【海鸥】</span>的竞标，出价<span>+ <span class="lightning">10000</span>金币</span>，是否同意竞标? </div>
