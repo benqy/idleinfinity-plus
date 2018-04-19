@@ -40,9 +40,9 @@ let plugSell = bagpack => {
                     item.siblings('.equip-name').css('text-decoration', 'line-through')
                     sellEquipById(id, () => {
                         item.parents('.equip-container').remove()
-                        setTimeout(()=>{
+                        setTimeout(() => {
                             sell()
-                        },510)
+                        }, 1100)
                     })
                 }
             }
@@ -58,15 +58,15 @@ let plugStore = bagpack => {
     bagpack.find('.panel-footer .pull-right').prepend(btn)
     btn.on('click', () => {
         let checboxs = bagpack.find('.equip-container > p input[type=checkbox]:checked').toArray()
-        let store = ()=>{
-            if(checboxs.length){
+        let store = () => {
+            if (checboxs.length) {
                 let item = $(checboxs.shift())
                 let id = item.siblings('.equip-sell').data('id')
                 storeEquipById(id, () => {
                     item.parents('.equip-container').appendTo($('.panel-inverse:eq(2) .panel-body'))
-                    setTimeout(()=>{
+                    setTimeout(() => {
                         store()
-                    },510)
+                    }, 1100)
                 })
             }
         }
@@ -103,6 +103,79 @@ let plugOrderByName = () => {
     input.val(localStorage.getItem('order'))
     order()
 }
+
+
+let plugAutoDungeon = ()=>{
+    let updateBlocks = el =>{
+        blocks = blocks.not(el)
+    }
+
+    //找出旁边有未探索空格的点
+    let blockNearUnlock = (block)=>{
+        let b = block
+        let id= b.attr('id')
+        let unlockCls = 'block mask'
+        let info = {el:block}
+        if(!b.hasClass('north') && $(`#${id-20}`).attr('class') == unlockCls ){
+            info.nearUnlock = $(`#${id-20}`)
+        }
+        else if(!b.hasClass('west') && $(`#${id-1}`).attr('class') == unlockCls ){
+            info.nearUnlock = $(`#${id-1}`)
+        }
+        else if(!b.hasClass('east') && $(`#${id*1+1}`).attr('class') == unlockCls ){
+            info.nearUnlock = $(`#${id*1+1}`)
+        }
+        else if(!b.hasClass('south') && $(`#${id*1+20}`).attr('class') == unlockCls ){
+            info.nearUnlock = $(`#${id*1+20}`)
+        }
+        return info
+    }   
+        
+
+    let start = ()=>{
+        if($('.boss').length){
+            $('.boss').trigger('click')
+            return
+        }
+        else if($('.col-md-3 .panel-body p:last .physical').text() == 0){
+            console.log('重置')
+            //$('.dungeon-refresh').trigger('click')
+            $("form").attr("action", "DungeonRefresh");
+            $("form").trigger("submit");
+            return
+        }
+        let blocks = $('.dungeon-container').find('.north,.west,.east,.south,.public')
+        let nextBlock
+        let nextMonster
+        blocks.each((i,n)=>{
+            if(!nextBlock || !nextMonster){
+                let info = blockNearUnlock($(n))
+                if(info.nearUnlock && info.nearUnlock.length){
+                    if(info.el.hasClass('monster')){
+                        //info.el.css('background','rgba(255,0,0,0.3)')
+                        nextMonster = info.el
+                    }
+                    else{
+                        //info.el.css('background','rgba(0,255,0,0.3)')
+                        nextBlock = info.el
+                    }
+                }
+            }
+        })
+        console.log(nextBlock)
+        if(nextBlock){
+            nextBlock.trigger('click')
+            setTimeout(start,1000)
+        }
+        else if(nextMonster){
+            nextMonster.trigger('click')
+            setTimeout(start,3000)
+        }
+    }
+
+    start()
+}
+
 if (~location.href.indexOf('Equipment')) {
     console.log('加载装备页插件')
     plugSell($('.panel-inverse:eq(1)'))
@@ -110,18 +183,23 @@ if (~location.href.indexOf('Equipment')) {
     plugStore($('.panel-inverse:eq(1)'))
 }
 if (~location.href.indexOf('Home')) {
+    //
     console.log('加载排序插件')
     plugOrderByName()
 }
-/* let storechecked = $('<a class="btn btn-xs btn-danger equip-storechecked" href="#" role="button">收藏选中</a>')
-bagpack.find('.panel-footer .pull-right').prepend(storechecked) */
-
-
-//<input type="text" placeholder="角色排序(输入名称,逗号分隔)">
-//<a id="abc" href="javascript:;">排序</a>
-
-/*  */
-//$('.panel-inverse:eq(1) .equip-container > p input[type=checkbox]:checked')
-
+ if(~location.href.indexOf('Map/Dungeon')){
+    console.log('自动打地牢')
+    plugAutoDungeon()
+}
+if(~location.href.indexOf('InDungeon')){
+    console.log('战斗中')
+    setInterval(()=>{
+        if($('.turn:eq(0)').css('display') == 'block'){
+            window.location.replace($('.pull-right .btn-default')[0].href)
+        }
+    },1000)
+}
 
 //<div class="notice-content"><span class="label label-success">竞标</span><span class="">[2018/4/14 23:24:06]</span>收到对装备<span class="unique equip-name">【海鸥】</span>的竞标，出价<span>+ <span class="lightning">10000</span>金币</span>，是否同意竞标? </div>
+
+
