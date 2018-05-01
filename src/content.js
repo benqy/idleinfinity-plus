@@ -104,73 +104,106 @@ let plugOrderByName = () => {
     order()
 }
 
-
-let plugAutoDungeon = ()=>{
-    let updateBlocks = el =>{
+let timelimit = 1500
+let plugAutoDungeon = () => {
+    let updateBlocks = el => {
         blocks = blocks.not(el)
     }
 
     //找出旁边有未探索空格的点
-    let blockNearUnlock = (block)=>{
+    let blockNearUnlock = (block) => {
         let b = block
-        let id= b.attr('id')
+        let id = b.attr('id')
         let unlockCls = 'block mask'
-        let info = {el:block}
-        if(!b.hasClass('north') && $(`#${id-20}`).attr('class') == unlockCls ){
-            info.nearUnlock = $(`#${id-20}`)
+        let info = { el: block }
+        if (!b.hasClass('north') && $(`#${id - 20}`).attr('class') == unlockCls) {
+            info.nearUnlock = $(`#${id - 20}`)
         }
-        else if(!b.hasClass('west') && $(`#${id-1}`).attr('class') == unlockCls ){
-            info.nearUnlock = $(`#${id-1}`)
+        else if (!b.hasClass('west') && $(`#${id - 1}`).attr('class') == unlockCls) {
+            info.nearUnlock = $(`#${id - 1}`)
         }
-        else if(!b.hasClass('east') && $(`#${id*1+1}`).attr('class') == unlockCls ){
-            info.nearUnlock = $(`#${id*1+1}`)
+        else if (!b.hasClass('east') && $(`#${id * 1 + 1}`).attr('class') == unlockCls) {
+            info.nearUnlock = $(`#${id * 1 + 1}`)
         }
-        else if(!b.hasClass('south') && $(`#${id*1+20}`).attr('class') == unlockCls ){
-            info.nearUnlock = $(`#${id*1+20}`)
+        else if (!b.hasClass('south') && $(`#${id * 1 + 20}`).attr('class') == unlockCls) {
+            info.nearUnlock = $(`#${id * 1 + 20}`)
         }
         return info
-    }   
-        
+    }
 
-    let start = ()=>{
-        if($('.boss').length){
-            $('.boss').trigger('click')
+
+    let triggerBlock = block => {
+        let lastTime = localStorage.getItem('lastTime')
+        let timeSpan = Date.now() - lastTime
+        if (timeSpan > timelimit) {
+            localStorage.setItem('lastTime', Date.now())
+            block.trigger('click')
+        }
+        else {
+            console.log('频率过快,延迟执行', timeSpan)
+        }
+
+    }
+
+    let start = () => {
+        if ($('.monster').not('.boss').length) {
+            console.log('小怪')
+            triggerBlock($('.monster').not('.boss'))
+            setTimeout(start, timelimit)
             return
         }
-        else if($('.col-md-3 .panel-body p:last .physical').text() == 0){
-            console.log('重置')
-            //$('.dungeon-refresh').trigger('click')
-            $("form").attr("action", "DungeonRefresh");
-            $("form").trigger("submit");
+        else if ($('.col-md-3 .panel-body p:last .physical').text() == 0) {
+            let lastTime = localStorage.getItem('lastTime')
+            let timeSpan = Date.now() - lastTime
+            if (timeSpan > timelimit) {
+                localStorage.setItem('lastTime', Date.now())
+                console.log('重置')
+                $("form").attr("action", "DungeonRefresh");
+                $("form").trigger("submit");
+            }
+            setTimeout(start, timelimit)
             return
         }
         let blocks = $('.dungeon-container').find('.north,.west,.east,.south,.public')
         let nextBlock
         let nextMonster
-        blocks.each((i,n)=>{
-            if(!nextBlock || !nextMonster){
+        blocks.each((i, n) => {
+            if (!nextBlock || !nextMonster) {
                 let info = blockNearUnlock($(n))
-                if(info.nearUnlock && info.nearUnlock.length){
-                    if(info.el.hasClass('monster')){
+                if (info.nearUnlock && info.nearUnlock.length) {
+                    if (info.el.hasClass('monster')) {
                         //info.el.css('background','rgba(255,0,0,0.3)')
                         nextMonster = info.el
                     }
-                    else{
+                    else {
                         //info.el.css('background','rgba(0,255,0,0.3)')
                         nextBlock = info.el
                     }
                 }
             }
         })
-        console.log(nextBlock)
-        if(nextBlock){
-            nextBlock.trigger('click')
-            setTimeout(start,1000)
+        //console.log(nextBlock)
+        if (nextMonster && !nextMonster.hasClass('boss')) {
+            console.log('小怪')
+            triggerBlock(nextMonster)
+            setTimeout(start, timelimit)
         }
-        else if(nextMonster){
-            nextMonster.trigger('click')
-            setTimeout(start,3000)
+        else if (nextBlock) {
+            console.log('探路')
+            triggerBlock(nextBlock)
+            setTimeout(start, timelimit)
         }
+        else if (nextMonster) {
+            console.log('boss')
+            triggerBlock(nextMonster)
+            setTimeout(start, timelimit)
+        }
+        else {
+            console.log('boss-')
+            triggerBlock($('.boss'))
+            setTimeout(start, timelimit)
+        }
+        console.log('end-func')
     }
 
     start()
@@ -182,22 +215,27 @@ if (~location.href.indexOf('Equipment')) {
     plugSell($('.panel-inverse:eq(2)'))
     plugStore($('.panel-inverse:eq(1)'))
 }
-if (~location.href.indexOf('Home')) {
+if (~location.href.indexOf('Home') || location.pathname == '/') {
     //
     console.log('加载排序插件')
     plugOrderByName()
 }
- if(~location.href.indexOf('Map/Dungeon')){
+if (~location.href.indexOf('Map/Dungeon')) {
     console.log('自动打地牢')
     plugAutoDungeon()
 }
-if(~location.href.indexOf('InDungeon')){
+if (~location.href.indexOf('InDungeon')) {
     console.log('战斗中')
-    setInterval(()=>{
-        if($('.turn:eq(0)').css('display') == 'block'){
-            window.location.replace($('.pull-right .btn-default')[0].href)
+    setInterval(() => {
+        let lastTime = localStorage.getItem('lastTime')
+        let timeSpan = Date.now() - lastTime
+        if (timeSpan > timelimit) {
+            localStorage.setItem('lastTime', Date.now())
+            if ($('.turn:eq(0)').css('display') == 'block') {
+                window.location.replace($('.pull-right .btn-default')[0].href)
+            }
         }
-    },1000)
+    }, timelimit)
 }
 
 //<div class="notice-content"><span class="label label-success">竞标</span><span class="">[2018/4/14 23:24:06]</span>收到对装备<span class="unique equip-name">【海鸥】</span>的竞标，出价<span>+ <span class="lightning">10000</span>金币</span>，是否同意竞标? </div>
